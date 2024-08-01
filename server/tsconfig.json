@@ -2,9 +2,14 @@
     "compilerOptions": {
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
+        "experimentalDecorators": true,
         "target": "ES2020",
         "sourceMap": true,
         "outDir": "dist",
+        "emitDecoratorMetadata": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true    
     },
     "include": ["src/**/*"],
 }
