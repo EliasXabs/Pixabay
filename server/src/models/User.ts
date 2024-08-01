@@ -14,6 +14,12 @@ export class User {
   @Column()
   password!: string;
 
+  @Column({ default: false })
+  verified!: boolean;
+
+  @Column({ nullable: true })
+  verificationToken!: string;
+
   @Column({ nullable: true })
   refreshToken!: string;
 }
