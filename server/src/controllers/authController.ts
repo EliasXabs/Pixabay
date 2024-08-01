@@ -42,3 +42,36 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: 'Error creating user', error });
   }
 };
+
+export const login = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+  
+      if (!email || !password) {
+        res.status(400).json({ message: 'Email and password are required' });
+        return;
+      }
+  
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { email } });
+
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
+  
+      const accessToken = generateAccessToken(user.id);
+      const refreshToken = generateRefreshToken(user.id);
+
+      user.refreshToken = refreshToken;
+      await userRepository.save(user);
+  
+      res.status(200).json({
+        accessToken,
+        refreshToken,
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).json({ message: 'Error during login', error });
+    }
+  };
