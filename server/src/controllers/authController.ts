@@ -112,3 +112,38 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
   };
   
+  export const checkVerificationStatus = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email } = req.body;
+  
+      if (!email) {
+        res.status(400).json({ message: 'Email is required' });
+        return;
+      }
+  
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { email } });
+  
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+  
+      if (user.verified) {
+        const accessToken = generateAccessToken(user.id);
+        const refreshToken = generateRefreshToken(user.id);
+  
+        res.status(200).json({
+          message: 'Email verified successfully.',
+          verified: true,
+          accessToken,
+          refreshToken,
+        });
+      } else {
+        res.status(200).json({ verified: false });
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      res.status(500).json({ message: 'Error checking verification status', error });
+    }
+  };
