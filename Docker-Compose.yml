@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    environment:
-      - NODE_ENV=production
+    env_file:
+      - ./server/.env
+    depends_on:
+      - db
 
   client:
     build:
@@ -18,3 +20,16 @@ services:
       - "3000:3000"
     depends_on:
       - server
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1402
+      POSTGRES_DB: pixabay
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

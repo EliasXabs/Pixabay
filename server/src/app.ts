@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { AppDataSource } from './config/db.js';
 
 dotenv.config();
 
@@ -16,7 +17,14 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Server Running' });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+AppDataSource.initialize()
+  .then(() => {
+    console.log("DB initialized");
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Error during Data Source initialization:", err);
+  });
