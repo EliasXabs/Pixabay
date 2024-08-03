@@ -1,5 +1,7 @@
 import { useState, FormEvent } from 'react';
 import Cookies from 'js-cookie';
+import { AxiosError } from 'axios';
+import { signup, login } from '../api';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -38,7 +40,7 @@ const AuthPage = () => {
             onClick={toggleAuth}
             className="bg-white text-blue-500 font-bold py-2 px-6 rounded-full hover:bg-gray-100 transition-colors"
           >
-            {isLogin ? 'Create an Account' : 'Already have an Account'}
+            {isLogin ? 'Already have an Account' : 'Create an Account'}
           </button>
         </div>
       </div>
@@ -53,21 +55,27 @@ const LoginForm = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    console.log('Login:', { email, password, rememberMe });
+    try {
+      const { accessToken, refreshToken } = await login(email, password);
+      console.log('Logged in successfully:', { accessToken, refreshToken });
 
-    // Simulate login process
-    const loginResponse = {
-      accessToken: 'exampleAccessToken',
-      refreshToken: 'exampleRefreshToken',
-    };
+      if (rememberMe) {
+        Cookies.set('accessToken', accessToken, { expires: 7 });
+        Cookies.set('refreshToken', refreshToken, { expires: 7 });
+      } else {
+        Cookies.set('accessToken', accessToken);
+        Cookies.set('refreshToken', refreshToken);
+      }
 
-    if (rememberMe) {
-      // Store tokens in cookies
-      Cookies.set('accessToken', loginResponse.accessToken, { expires: 7 }); // Expires in 7 days
-      Cookies.set('refreshToken', loginResponse.refreshToken, { expires: 7 });
+      // Redirect to homepage or dashboard
+    } catch (err) {
+      const error = err as AxiosError;
+      if (error.response) {
+        console.error('Login failed:', error.response.data);
+      } else {
+        console.error('Login failed:', error.message);
+      }
     }
-
-    // Handle login logic here
   };
 
   return (
@@ -120,9 +128,19 @@ const SignupForm = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    console.log('Signup:', { username, email, password });
+    try {
+      const response = await signup(username, email, password);
+      console.log('Signup successful:', response);
 
-    // Add your signup logic here
+      // Redirect to verification page or show a message
+    } catch (err) {
+      const error = err as AxiosError;
+      if (error.response) {
+        console.error('Signup failed:', error.response.data);
+      } else {
+        console.error('Signup failed:', error.message);
+      }
+    }
   };
 
   return (
