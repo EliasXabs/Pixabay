@@ -27,9 +27,9 @@ export const verifyEmail = async (token: string) => {
   return response.data;
 };
 
-export const checkVerificationStatus = async (userId: number) => {
-  const response = await axios.get(`${API_URL}/auth/check-verification`, {
-    params: { userId },
-  });
-  return response.data;
-};
+export const checkVerificationStatus = async (email: string) => {
+    const response = await axios.post(`${API_URL}/auth/check-verification-status`, {
+      email
+    });
+    return response.data;
+  };

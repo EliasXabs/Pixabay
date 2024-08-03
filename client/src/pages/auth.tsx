@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
-import Cookies from 'js-cookie';
 import { AxiosError } from 'axios';
+import { useRouter } from 'next/router';
 import { signup, login } from '../api';
+import Cookies from 'js-cookie';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -52,9 +53,11 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter(); // Move useRouter to the top level of the component
 
   const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent the default form submission
+
     try {
       const { accessToken, refreshToken } = await login(email, password);
       console.log('Logged in successfully:', { accessToken, refreshToken });
@@ -67,7 +70,7 @@ const LoginForm = () => {
         Cookies.set('refreshToken', refreshToken);
       }
 
-      // Redirect to homepage or dashboard
+      router.push('/home');
     } catch (err) {
       const error = err as AxiosError;
       if (error.response) {
@@ -125,6 +128,7 @@ const SignupForm = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -132,7 +136,11 @@ const SignupForm = () => {
       const response = await signup(username, email, password);
       console.log('Signup successful:', response);
 
-      // Redirect to verification page or show a message
+      // Redirect to verification page with the user's email as a query parameter
+      router.push({
+        pathname: '/verification',
+        query: { email },
+      });
     } catch (err) {
       const error = err as AxiosError;
       if (error.response) {
