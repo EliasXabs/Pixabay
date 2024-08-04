@@ -1,9 +1,22 @@
-// src/pages/_app.tsx
+// pages/_app.tsx
 import '../app/globals.css';
 import type { AppProps } from 'next/app';
+import Navbar from '../components/navbar';
+import { useRouter } from 'next/router';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  const router = useRouter();
+
+  const noNavbarRoutes = ['/auth', '/verification'];
+
+  const isNavbarVisible = !noNavbarRoutes.includes(router.pathname);
+
+  return (
+    <>
+      {isNavbarVisible && <Navbar />}
+      <Component {...pageProps} />
+    </>
+  );
 }
 
 export default MyApp;
