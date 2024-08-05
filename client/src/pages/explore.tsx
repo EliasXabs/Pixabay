@@ -1,122 +1,150 @@
-// pages/explore.tsx
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Masonry from 'react-masonry-css';
-
-const shuffleArray = (array: any[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
+import { shuffleArray } from '../lib/shufflearray';
+import SearchBar from '../components/searchbar';
 
 const ExplorePage = () => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(''); // Query input state
+  const [searchQuery, setSearchQuery] = useState(''); // State for search execution
   const [results, setResults] = useState<any[]>([]);
   const [randomResults, setRandomResults] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    mediaType: 'both',
+    imageType: 'all',
+    orientation: 'all',
+    category: 'all',
+    colors: 'all',
+    order: 'popular',
+    open: false,
+  });
 
   // Fetch random images and videos on initial render
   useEffect(() => {
     const fetchRandomContent = async () => {
-      setLoading(true);
       try {
         const randomImageResponse = await axios.get(
-          `https://pixabay.com/api/?key=${process.env.NEXT_PUBLIC_API_KEY}&per_page=50&image_type=photo`
+          `https://pixabay.com/api/?key=${process.env.NEXT_PUBLIC_API_KEY}&per_page=30&image_type=photo`
         );
         const randomVideoResponse = await axios.get(
           `https://pixabay.com/api/videos/?key=${process.env.NEXT_PUBLIC_API_KEY}&per_page=20`
         );
 
-        // Combine images and videos and shuffle the array
         const combinedRandomResults = shuffleArray([
           ...randomImageResponse.data.hits,
           ...randomVideoResponse.data.hits.map((video: any) => ({
             ...video,
             isVideo: true,
           })),
-        ]);
+        ]).slice(0, 50);
 
         setRandomResults(combinedRandomResults);
       } catch (error) {
         console.error('Error fetching random content:', error);
       }
-      setLoading(false);
     };
 
     fetchRandomContent();
   }, []);
 
-  const fetchSearchResults = async () => {
-    setLoading(true);
+  const fetchSearchResults = async (currentPage: number) => {
     try {
-      const imageResponse = await axios.get(
-        `https://pixabay.com/api/?key=${process.env.NEXT_PUBLIC_API_KEY}&q=${encodeURIComponent(
-          query
-        )}&image_type=photo&page=${page}&per_page=50`
-      );
-      const videoResponse = await axios.get(
-        `https://pixabay.com/api/videos/?key=${process.env.NEXT_PUBLIC_API_KEY}&q=${encodeURIComponent(
-          query
-        )}&page=${page}&per_page=15`
-      );
+      let images: any[] = [];
+      let videos: any[] = [];
+      const itemsPerPage = 50;
+      let imageTotalHits = 0;
+      let videoTotalHits = 0;
 
-      const combinedResults = shuffleArray([
-        ...imageResponse.data.hits,
-        ...videoResponse.data.hits.map((video: any) => ({
+      if (filters.mediaType !== 'videos') {
+        const imageResponse = await axios.get(
+          `https://pixabay.com/api/?key=${process.env.NEXT_PUBLIC_API_KEY}&q=${encodeURIComponent(
+            searchQuery
+          )}&image_type=${filters.imageType}&orientation=${
+            filters.orientation
+          }&category=${filters.category}&colors=${filters.colors}&order=${
+            filters.order
+          }&page=${currentPage}&per_page=${filters.mediaType === 'both' ? 35 : 50}`
+        );
+        images = imageResponse.data.hits;
+        imageTotalHits = imageResponse.data.totalHits;
+      }
+
+      if (filters.mediaType !== 'images') {
+        const videoResponse = await axios.get(
+          `https://pixabay.com/api/videos/?key=${process.env.NEXT_PUBLIC_API_KEY}&q=${encodeURIComponent(
+            searchQuery
+          )}&video_type=all&order=${filters.order}&page=${currentPage}&per_page=${
+            filters.mediaType === 'both' ? 15 : 50
+          }`
+        );
+        videos = videoResponse.data.hits.map((video: any) => ({
           ...video,
           isVideo: true,
-        })),
-      ]);
+        }));
+        videoTotalHits = videoResponse.data.totalHits;
+      }
+
+      const combinedResults = shuffleArray([...images, ...videos]).slice(0, itemsPerPage);
 
       setResults(combinedResults);
       setTotalPages(
         Math.ceil(
           Math.max(
-            imageResponse.data.totalHits / 10,
-            videoResponse.data.totalHits / 5
+            imageTotalHits / (filters.mediaType === 'both' ? 35 : 50),
+            videoTotalHits / (filters.mediaType === 'both' ? 15 : 50)
           )
         )
       );
     } catch (error) {
       console.error('Error fetching data from Pixabay:', error);
     }
-    setLoading(false);
   };
 
-  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = async (event: React.FormEvent) => {
     event.preventDefault();
     if (query.trim() === '') return;
 
     setPage(1);
-    await fetchSearchResults();
+    setSearchQuery(query); // Update searchQuery to trigger search execution
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      mediaType: 'both',
+      imageType: 'all',
+      orientation: 'all',
+      category: 'all',
+      colors: 'all',
+      order: 'popular',
+      open: false,
+    });
   };
 
   const handleNextPage = () => {
     if (page < totalPages) {
-      setPage((prevPage) => prevPage + 1);
+      const newPage = page + 1;
+      setPage(newPage);
     }
   };
 
   const handlePreviousPage = () => {
     if (page > 1) {
-      setPage((prevPage) => prevPage - 1);
+      const newPage = page - 1;
+      setPage(newPage);
     }
   };
 
   useEffect(() => {
-    if (query.trim() !== '') {
-      fetchSearchResults();
+    if (searchQuery.trim() !== '') {
+      fetchSearchResults(page);
     }
-  }, [page]);
+  }, [page, searchQuery, filters]); // Only search when searchQuery changes
 
   const breakpointColumnsObj = {
-    default: 5,
-    1100: 4,
+    default: 4,
+    1100: 3,
     700: 2,
     500: 1,
   };
@@ -124,52 +152,39 @@ const ExplorePage = () => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-5xl mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-6 text-center">Explore</h1>
-        <form onSubmit={handleSearch} className="flex justify-end mb-6">
-          <input
-            type="text"
-            placeholder="Search for images or videos"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-grow p-2 border border-gray-300 rounded-l focus:outline-none max-w-xs"
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600 transition-colors"
-          >
-            Search
-          </button>
-        </form>
-
-        {loading ? (
-          <div className="text-center">Loading...</div>
-        ) : (
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="flex w-auto gap-4"
-            columnClassName="masonry-grid_column"
-          >
-            {(results.length > 0 ? results : randomResults).map((result: any) => (
-              <div
-                key={result.id}
-                className="bg-white rounded-lg shadow-sm overflow-hidden mb-4"
-              >
-                {result.isVideo ? (
-                  <video controls className="w-full h-auto">
-                    <source src={result.videos.medium.url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <img
-                    src={result.webformatURL}
-                    alt={result.tags}
-                    className="w-full h-auto"
-                  />
-                )}
-              </div>
-            ))}
-          </Masonry>
-        )}
+        <SearchBar
+          query={query}
+          setQuery={setQuery}
+          handleSearch={handleSearch}
+          filters={filters}
+          setFilters={setFilters}
+          clearFilters={clearFilters}
+        />
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="flex w-auto gap-4"
+          columnClassName="masonry-grid_column"
+        >
+          {(results.length > 0 ? results : randomResults).map((result: any) => (
+            <div
+              key={result.id}
+              className="bg-white rounded-lg shadow-sm overflow-hidden mb-4"
+            >
+              {result.isVideo ? (
+                <video controls className="w-full h-auto">
+                  <source src={result.videos.medium.url} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <img
+                  src={result.webformatURL}
+                  alt={result.tags}
+                  className="w-full h-auto"
+                />
+              )}
+            </div>
+          ))}
+        </Masonry>
 
         {results.length > 0 && (
           <div className="flex justify-between mt-6">
@@ -184,6 +199,9 @@ const ExplorePage = () => {
             >
               Previous
             </button>
+            <span className="text-gray-700">
+              Page {page} of {totalPages}
+            </span>
             <button
               onClick={handleNextPage}
               disabled={page === totalPages}
