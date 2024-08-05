@@ -3,6 +3,8 @@ import axios from 'axios';
 import Masonry from 'react-masonry-css';
 import { shuffleArray } from '../lib/shufflearray';
 import SearchBar from '../components/searchbar';
+import { withAuth } from '@/lib/authhelpers';
+import { GetServerSideProps } from 'next';
 
 const ExplorePage = () => {
   const [query, setQuery] = useState(''); // Query input state
@@ -218,6 +220,10 @@ const ExplorePage = () => {
       </div>
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  return withAuth(context);
 };
 
 export default ExplorePage;

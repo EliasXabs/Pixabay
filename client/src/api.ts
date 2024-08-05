@@ -33,3 +33,12 @@ export const checkVerificationStatus = async (email: string) => {
     });
     return response.data;
   };
+
+export const getProfile = async (accessToken: string) => {
+  const response = await axios.get(`${API_URL}/user/profile`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+  return response.data;
+};
