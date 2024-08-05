@@ -1,7 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+// src/models/User.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  BaseEntity,
+} from 'typeorm';
+import { Favourite } from './Favourite.js';
 
 @Entity()
-export class User {
+export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -22,4 +30,7 @@ export class User {
 
   @Column({ nullable: true })
   refreshToken!: string;
+
+  @OneToMany(() => Favourite, (favourite) => favourite.user, { lazy: true })
+  favorites!: Promise<Favourite[]>;
 }
