@@ -5,6 +5,8 @@ import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 import Masonry from 'react-masonry-css';
 import MediaCard from '../components/mediacard';
+import { GetServerSideProps } from 'next';
+import { withAuth } from '../lib/authhelpers';
 
 interface UserProfile {
   id: number;
@@ -181,5 +183,9 @@ const ProfilePage = () => {
     </div>
   );
 };
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    return withAuth(context);
+  };
 
 export default ProfilePage;

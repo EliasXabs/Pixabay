@@ -7,6 +7,8 @@ import SearchBar from '../components/searchbar';
 import MediaCard from '../components/mediacard';
 import { getFavoriteIds, addFavorite, deleteFavorite } from '../api';
 import Cookies from 'js-cookie';
+import { GetServerSideProps } from 'next';
+import { withAuth } from '../lib/authhelpers';
 
 const ExplorePage = () => {
   const [query, setQuery] = useState('');
@@ -248,4 +250,7 @@ const ExplorePage = () => {
   );
 };
 
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  return withAuth(context);
+};
 export default ExplorePage;
