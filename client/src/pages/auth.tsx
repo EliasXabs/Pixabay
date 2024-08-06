@@ -103,7 +103,7 @@ const LoginForm = () => {
             className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500"
           />
         </div>
-        <div className="w-full max-w-xs flex items-center">
+        <div className="w-full max-w-xs flex items-center justify-between">
           <label className="flex items-center text-sm font-medium cursor-pointer">
             <input
               type="checkbox"
@@ -113,6 +113,13 @@ const LoginForm = () => {
             />
             Remember Me
           </label>
+          {/* Forgot Password Link */}
+          <a
+            href="/forgot-password"
+            className="text-blue-500 hover:underline text-sm"
+          >
+            Forgot Password?
+          </a>
         </div>
       </div>
       <button
@@ -195,6 +202,5 @@ const SignupForm = () => {
     </form>
   );
 };
-
 
 export default AuthPage;

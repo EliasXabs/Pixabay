@@ -90,3 +90,18 @@ export const deleteFavorite = async (accessToken: string, mediaId: number) => {
   });
   return response.data;
 };
+
+export const initiatePasswordReset = async (email: string) => {
+  const response = await axios.post(`${API_URL}/auth/initiate-password-reset`, {
+    email,
+  });
+  return response.data;
+};
+
+export const completePasswordReset = async (token: string, newPassword: string) => {
+  const response = await axios.post(`${API_URL}/auth/complete-password-reset`, {
+    token,
+    newPassword,
+  });
+  return response.data;
+};

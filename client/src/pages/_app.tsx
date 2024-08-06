@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
-  const noNavbarRoutes = ['/auth', '/verification'];
+  const noNavbarRoutes = ['/auth', '/verification', '/forgot-password', '/reset-password'];
 
   const isNavbarVisible = !noNavbarRoutes.includes(router.pathname);
 
