@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { AppDataSource } from '../config/db.js';
 import { User } from '../models/User.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwtUtils.js';
-import { sendVerificationEmail } from '../utils/emailUtils.js';
+import { generateAccessToken, generateRefreshToken, generatePasswordResetToken, verifyToken } from '../utils/jwtUtils.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/emailUtils.js';
 import { randomBytes } from 'crypto';
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
@@ -145,5 +145,62 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     } catch (error) {
       console.error('Error checking verification status:', error);
       res.status(500).json({ message: 'Error checking verification status', error });
+    }
+  };
+
+  export const initiatePasswordReset = async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { email } });
+  
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      const resetToken = generatePasswordResetToken(user.id);
+      user.passwordResetToken = resetToken;
+      user.passwordResetExpires = new Date(Date.now() + 3600000); // 1 hour from now
+      await userRepository.save(user);
+  
+      await sendPasswordResetEmail(email, resetToken);
+  
+      res.json({ message: 'Password reset email sent' });
+    } catch (error) {
+      console.error('Error initiating password reset:', error);
+      res.status(500).json({ error: 'Failed to initiate password reset' });
+    }
+  };
+  
+  // Complete Password Reset
+  export const completePasswordReset = async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      const userRepository = AppDataSource.getRepository(User);
+  
+      const decoded = verifyToken(token, process.env.RESET_TOKEN_SECRET!);
+  
+      if (!decoded) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+      }
+  
+      const user = await userRepository.findOne({
+        where: { passwordResetToken: token, id: decoded.userId },
+      });
+  
+      if (!user || user.passwordResetExpires < new Date()) {
+        return res.status(400).json({ error: 'Invalid or expired token' });
+      }
+  
+      user.password = await bcrypt.hash(newPassword, 10);
+      user.passwordResetToken = '';
+      user.passwordResetExpires = new Date(0);
+  
+      await userRepository.save(user);
+  
+      res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+      console.error('Error completing password reset:', error);
+      res.status(500).json({ error: 'Failed to reset password' });
     }
   };

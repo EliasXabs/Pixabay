@@ -31,6 +31,12 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   refreshToken!: string;
 
+  @Column({ nullable: true })
+  passwordResetToken!: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  passwordResetExpires!: Date;
+
   @OneToMany(() => Favourite, (favourite) => favourite.user, { lazy: true })
   favorites!: Promise<Favourite[]>;
 }

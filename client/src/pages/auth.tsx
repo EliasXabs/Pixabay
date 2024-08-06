@@ -137,9 +137,7 @@ const SignupForm = () => {
       const response = await signup(username, email, password);
       console.log('Signup successful:', response);
 
-      // If the signup was successful, we assume the user is created
       if (response.message === 'User created successfully') {
-        console.log('Redirecting to verification page...');
         router.push({
           pathname: '/verification',
           query: { email },

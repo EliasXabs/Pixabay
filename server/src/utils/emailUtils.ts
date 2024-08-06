@@ -23,3 +23,16 @@ export const sendVerificationEmail = async (to: string, verificationUrl: string)
     throw new Error('Error sending verification email');
   }
 };
+
+
+export const sendPasswordResetEmail = async (to: string, token: string) => {
+  const resetUrl = `http://localhost:3000/reset-password?token=${token}`;
+  const mailOptions = {
+    to,
+    from: '"Your App Name" <no-reply@yourapp.com>',
+    subject: 'Password Reset',
+    text: `Please reset your password by clicking the following link: ${resetUrl}`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
