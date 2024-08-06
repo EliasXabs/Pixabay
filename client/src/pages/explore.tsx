@@ -5,6 +5,8 @@ import Masonry from 'react-masonry-css';
 import { shuffleArray } from '../lib/shufflearray';
 import SearchBar from '../components/searchbar';
 import MediaCard from '../components/mediacard';
+import { getFavoriteIds, addFavorite, deleteFavorite } from '../api';
+import Cookies from 'js-cookie';
 
 const ExplorePage = () => {
   const [query, setQuery] = useState('');
@@ -22,6 +24,8 @@ const ExplorePage = () => {
     order: 'popular',
     open: false,
   });
+
+  const accessToken = Cookies.get('accessToken');
 
   useEffect(() => {
     const fetchRandomContent = async () => {
@@ -49,6 +53,27 @@ const ExplorePage = () => {
 
     fetchRandomContent();
   }, []);
+
+  useEffect(() => {
+    const fetchFavoriteIds = async () => {
+      if (!accessToken) return;
+      try {
+        const favoriteIds = await getFavoriteIds(accessToken);
+        const favoriteMap = favoriteIds.reduce(
+          (acc: { [key: number]: boolean }, id: number) => {
+            acc[id] = true;
+            return acc;
+          },
+          {}
+        );
+        setFavorites(favoriteMap);
+      } catch (error) {
+        console.error('Error fetching favorite IDs:', error);
+      }
+    };
+
+    fetchFavoriteIds();
+  }, [accessToken]);
 
   const fetchSearchResults = async () => {
     try {
@@ -129,16 +154,33 @@ const ExplorePage = () => {
     }
   }, [page]);
 
-  // Automatically fetch results on filter change
   useEffect(() => {
     fetchSearchResults();
   }, [filters]);
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prevFavorites) => ({
-      ...prevFavorites,
-      [id]: !prevFavorites[id],
-    }));
+  const toggleFavorite = async (media: any) => {
+    if (!accessToken) return;
+    const isCurrentlyFavorite = favorites[media.id];
+
+    try {
+      if (isCurrentlyFavorite) {
+        await deleteFavorite(accessToken, media.id);
+      } else {
+        await addFavorite(
+          accessToken,
+          media.id,
+          media.isVideo ? 'video' : 'image',
+          media.isVideo ? media.videos.medium.url : media.webformatURL
+        );
+      }
+
+      setFavorites((prevFavorites) => ({
+        ...prevFavorites,
+        [media.id]: !isCurrentlyFavorite,
+      }));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   const breakpointColumnsObj = {

@@ -42,3 +42,51 @@ export const getProfile = async (accessToken: string) => {
   });
   return response.data;
 };
+
+export const getFavoriteIds = async (accessToken: string) => {
+  const response = await axios.get(`${API_URL}/favourite/ids`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data.favouriteIds;
+};
+
+// Get detailed favorites for a user
+export const getFavorites = async (accessToken: string) => {
+  const response = await axios.get(`${API_URL}/favourite`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data.favourites;
+};
+
+// Add a new favorite
+export const addFavorite = async (
+  accessToken: string,
+  mediaId: number,
+  mediaType: string,
+  mediaUrl: string
+) => {
+  const response = await axios.post(
+    `${API_URL}/favourite`,
+    { mediaId, mediaType, mediaUrl },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+// Delete a favorite
+export const deleteFavorite = async (accessToken: string, mediaId: number) => {
+  const response = await axios.delete(`${API_URL}/favourite/${mediaId}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data;
+};
