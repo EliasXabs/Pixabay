@@ -81,6 +81,8 @@ const ExplorePage = () => {
     try {
       let images: any[] = [];
       let videos: any[] = [];
+      let totalImages = 0;
+      let totalVideos = 0;
 
       if (filters.mediaType !== 'videos') {
         const imageResponse = await axios.get(
@@ -93,6 +95,7 @@ const ExplorePage = () => {
           }&page=${page}&per_page=40`
         );
         images = imageResponse.data.hits;
+        totalImages = imageResponse.data.totalHits; // Assuming totalHits gives total results
       }
 
       if (filters.mediaType !== 'images') {
@@ -105,14 +108,14 @@ const ExplorePage = () => {
           ...video,
           isVideo: true,
         }));
+        totalVideos = videoResponse.data.totalHits; // Assuming totalHits gives total results
       }
 
       const combinedResults = shuffleArray([...images, ...videos]);
 
       setResults(combinedResults);
-      setTotalPages(
-        Math.ceil(Math.max(images.length / 40, videos.length / 10))
-      );
+      const totalItems = totalImages + totalVideos;
+      setTotalPages(Math.ceil(totalItems / 50)); // Assuming we want 50 items per page
     } catch (error) {
       console.error('Error fetching data from Pixabay:', error);
     }
@@ -122,7 +125,7 @@ const ExplorePage = () => {
     event.preventDefault();
     if (query.trim() === '') return;
 
-    setPage(1);
+    setPage(1); // Reset to the first page for a new search
     await fetchSearchResults();
   };
 
@@ -136,6 +139,7 @@ const ExplorePage = () => {
       order: 'popular',
       open: false,
     });
+    setPage(1); // Reset to the first page when filters are cleared
   };
 
   const handleNextPage = () => {
@@ -220,7 +224,7 @@ const ExplorePage = () => {
         </Masonry>
 
         {results.length > 0 && (
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between items-center mt-6">
             <button
               onClick={handlePreviousPage}
               disabled={page === 1}
@@ -232,6 +236,9 @@ const ExplorePage = () => {
             >
               Previous
             </button>
+            <span className="mx-4">
+              Page {page} of {totalPages}
+            </span>
             <button
               onClick={handleNextPage}
               disabled={page === totalPages}

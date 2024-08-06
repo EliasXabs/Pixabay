@@ -3,8 +3,8 @@ import bcrypt from 'bcryptjs';
 import { AppDataSource } from '../config/db.js';
 import { User } from '../models/User.js';
 import { generateAccessToken, generateRefreshToken, generatePasswordResetToken, verifyToken } from '../utils/jwtUtils.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/emailUtils.js';
 import { randomBytes } from 'crypto';
+import { enqueueVerificationEmail, enqueuePasswordResetEmail } from '../utils/emailQueue.js';
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -16,8 +16,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     }
 
     const userRepository = AppDataSource.getRepository(User);
-    
     const existingUser = await userRepository.findOne({ where: [{ username }, { email }] });
+
     if (existingUser) {
       res.status(400).json({ message: 'Username or email already taken' });
       return;
@@ -36,7 +36,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     await userRepository.save(newUser);
 
     const verificationUrl = `http://localhost:5000/api/auth/verify-email?token=${verificationToken}`;
-    await sendVerificationEmail(email, verificationUrl);
+
+    enqueueVerificationEmail(email, verificationUrl);
 
     res.status(201).json({
       message: 'User created successfully',
@@ -160,10 +161,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   
       const resetToken = generatePasswordResetToken(user.id);
       user.passwordResetToken = resetToken;
-      user.passwordResetExpires = new Date(Date.now() + 3600000); // 1 hour from now
+      user.passwordResetExpires = new Date(Date.now() + 3600000);
       await userRepository.save(user);
   
-      await sendPasswordResetEmail(email, resetToken);
+      enqueuePasswordResetEmail(email, resetToken);
   
       res.json({ message: 'Password reset email sent' });
     } catch (error) {
@@ -171,8 +172,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(500).json({ error: 'Failed to initiate password reset' });
     }
   };
-  
-  // Complete Password Reset
+
   export const completePasswordReset = async (req: Request, res: Response) => {
     try {
       const { token, newPassword } = req.body;
