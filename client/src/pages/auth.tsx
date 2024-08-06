@@ -1,3 +1,4 @@
+// pages/auth.tsx
 import { useState, FormEvent } from 'react';
 import { AxiosError } from 'axios';
 import { useRouter } from 'next/router';
@@ -53,10 +54,10 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const router = useRouter(); // Move useRouter to the top level of the component
+  const router = useRouter();
 
   const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault(); // Prevent the default form submission
+    event.preventDefault();
 
     try {
       const { accessToken, refreshToken } = await login(email, password);
@@ -136,11 +137,16 @@ const SignupForm = () => {
       const response = await signup(username, email, password);
       console.log('Signup successful:', response);
 
-      // Redirect to verification page with the user's email as a query parameter
-      router.push({
-        pathname: '/verification',
-        query: { email },
-      });
+      // If the signup was successful, we assume the user is created
+      if (response.message === 'User created successfully') {
+        console.log('Redirecting to verification page...');
+        router.push({
+          pathname: '/verification',
+          query: { email },
+        });
+      } else {
+        console.error('Unexpected response:', response);
+      }
     } catch (err) {
       const error = err as AxiosError;
       if (error.response) {
@@ -191,5 +197,6 @@ const SignupForm = () => {
     </form>
   );
 };
+
 
 export default AuthPage;

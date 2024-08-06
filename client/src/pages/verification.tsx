@@ -1,24 +1,30 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { checkVerificationStatus } from '../api'; // Import the API function
+import Cookies from 'js-cookie';
 
 const VerificationPage = () => {
   const router = useRouter();
   const { email } = router.query;
   const [isVerified, setIsVerified] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkStatus = async () => {
       if (email) {
         try {
-          const { verified } = await checkVerificationStatus(email as string);
-          setIsVerified(verified);
+          const response = await checkVerificationStatus(email as string);
+          const { verified, accessToken, refreshToken } = response;
 
           if (verified) {
+            setIsVerified(true);
+            Cookies.set('accessToken', accessToken);
+            Cookies.set('refreshToken', refreshToken);
             router.push('/home');
           }
         } catch (error) {
           console.error('Error checking verification status:', error);
+          setError('Failed to verify email. Please try again.');
         }
       }
     };
@@ -31,14 +37,18 @@ const VerificationPage = () => {
   const handleCheckVerification = async () => {
     if (email) {
       try {
-        const { verified } = await checkVerificationStatus(email as string);
-        setIsVerified(verified);
+        const response = await checkVerificationStatus(email as string);
+        const { verified, accessToken, refreshToken } = response;
 
         if (verified) {
+          setIsVerified(true);
+          Cookies.set('accessToken', accessToken);
+          Cookies.set('refreshToken', refreshToken);
           router.push('/home');
         }
       } catch (error) {
         console.error('Error checking verification status:', error);
+        setError('Failed to verify email. Please try again.');
       }
     }
   };
@@ -53,6 +63,7 @@ const VerificationPage = () => {
             {email || 'your-email@example.com'}
           </span>
         </p>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <button
           className="mt-4 bg-blue-500 text-white py-2 px-6 rounded-full hover:bg-blue-600 transition-colors"
           onClick={handleCheckVerification}
