@@ -113,7 +113,7 @@ export const getTopFavorites = async (req: Request, res: Response) => {
       .groupBy('favourite.mediaId')
       .addGroupBy('favourite.mediaUrl')
       .orderBy('count', 'DESC')
-      .limit(30) // Change the limit as needed
+      .limit(30)
       .getRawMany();
 
     res.json({ topFavorites });

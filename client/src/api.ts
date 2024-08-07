@@ -105,3 +105,24 @@ export const completePasswordReset = async (token: string, newPassword: string) 
   });
   return response.data;
 };
+
+export const getTopFavorites = async (accessToken: string) => {
+  const response = await axios.get(`${API_URL}/favourite/top`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return response.data.topFavorites;
+};
+
+export const fetchMediaById = async (mediaId: any, mediaType: string) => {
+  try {
+    const response = await axios.get(
+      `https://pixabay.com/api/${mediaType === 'video' ? 'videos' : ''}/?key=${process.env.NEXT_PUBLIC_API_KEY}&id=${mediaId}`
+    );
+    return response.data.hits[0]; // Assuming the first hit is the correct one
+  } catch (error) {
+    console.error('Error fetching media by ID:', error);
+    throw error;
+  }
+};

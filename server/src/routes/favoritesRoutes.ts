@@ -24,6 +24,6 @@ router.post('/', authenticateToken, addFavorite);
 router.delete('/:pixabayId', authenticateToken, deleteFavorite);
 
 // Get top favorites
-router.get('/top', getTopFavorites);
+router.get('/top', authenticateToken, getTopFavorites);
 
 export default router;
