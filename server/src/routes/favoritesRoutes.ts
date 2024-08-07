@@ -5,6 +5,7 @@ import {
   getFavorites,
   addFavorite,
   deleteFavorite,
+  getTopFavorites,
 } from '../controllers/favouriteController.js';
 import { authenticateToken } from '../middlewares/authmiddleware.js';
 
@@ -21,5 +22,8 @@ router.post('/', authenticateToken, addFavorite);
 
 // Delete a favorite
 router.delete('/:pixabayId', authenticateToken, deleteFavorite);
+
+// Get top favorites
+router.get('/top', getTopFavorites);
 
 export default router;

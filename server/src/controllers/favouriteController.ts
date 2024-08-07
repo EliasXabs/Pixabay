@@ -100,3 +100,25 @@ export const deleteFavorite = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to delete favorite' });
   }
 };
+
+export const getTopFavorites = async (req: Request, res: Response) => {
+  try {
+    const favouriteRepository = AppDataSource.getRepository(Favourite);
+
+    const topFavorites = await favouriteRepository
+      .createQueryBuilder('favourite')
+      .select('favourite.mediaId', 'mediaId')
+      .addSelect('favourite.mediaUrl', 'mediaUrl')
+      .addSelect('COUNT(favourite.mediaId)', 'count')
+      .groupBy('favourite.mediaId')
+      .addGroupBy('favourite.mediaUrl')
+      .orderBy('count', 'DESC')
+      .limit(30) // Change the limit as needed
+      .getRawMany();
+
+    res.json({ topFavorites });
+  } catch (error) {
+    console.error('Error fetching top favorites:', error);
+    res.status(500).json({ error: 'Failed to fetch top favorites' });
+  }
+};
